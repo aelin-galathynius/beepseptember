@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>🌸</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#fff6f6;
+    --bg2:#ffeef0;
+    --accent:#ffd166;
+    --rose:#ff9fb3;
+    --deep:#7a3b2a;
+    --soft:#fff8f6;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:"Nunito", "Segoe UI", sans-serif;
+    background: radial-gradient(1200px 600px at 10% 20%, #fffaf9 0%, var(--bg1) 25%, var(--bg2) 70%);
+    color:var(--deep);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    overflow:hidden;
+  }
+
+  h1{
+    margin:8px 0 18px;
+    font-size:1.9rem;
+    color:var(--deep);
+    letter-spacing:.4px;
+    font-weight:700;
+    background: rgba(255,248,246,0.9);
+    padding:10px 18px;
+    border-radius:18px;
+    border:1px solid rgba(255,220,220,0.8);
+    box-shadow:0 8px 28px rgba(255,200,200,0.14);
+    z-index:2;
+  }
+
+  .heart-bg{ position: absolute; inset:0; pointer-events:none; z-index:0; }
+  .heart{ position:absolute; color:var(--rose); font-size:1.6rem; opacity:0.10; animation:float 9s linear infinite; user-select:none; }
+  @keyframes float{0%{transform:translateY(0)}50%{opacity:.28}100%{transform:translateY(-95vh)}}
+
+  .flower-wrap{
+    width:min(520px,92vw);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    z-index:2;
+  }
+
+  /* .flower is the layout box; no inner padding so center stays exactly in middle */
+  .flower{
+    width:420px;
+    height:420px;
+    max-width:86vw;
+    max-height:86vw;
+    display:grid;
+    place-items:center;
+    position:relative;
+    margin:0 auto;
+    filter:drop-shadow(0 16px 40px rgba(255,160,180,0.12));
+    border-radius:28px;
+    overflow:visible;
+    background:transparent;
+    padding:0;
+  }
+
+  /* decorative background layer inside the flower (keeps visual padding without shifting center) */
+  .flower-bg{
+    position:absolute;
+    inset:0;
+    border-radius:28px;
+    background:linear-gradient(180deg,var(--soft), rgba(255,245,240,0.6));
+    padding:18px; /* visual padding only */
+    pointer-events:none;
+    z-index:1;
+  }
+
+  /* CENTER (stigma) - moved lower so it sits visually in the middle of the petals */
+  .center{
+    position:absolute;
+    left:50%;
+    top: calc(50% + 68px);   /* lowered more so the yellow stigma sits inside the petal gap */
+    transform:translate(-50%,-50%);
+    width:255px; height:255px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--deep);
+    font-weight:700;
+    text-align:center; padding:6px;
+    z-index:3;
+    pointer-events:none; /* normally not clickable */
+  }
+  .center.ready{ pointer-events:auto; cursor:pointer; } /* becomes clickable when ready */
+
+  /* decorative outer ring for center */
+  .center .ring{
+    position:absolute;
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background: radial-gradient(circle at 40% 35%, rgba(255,210,102,0.96) 8%, rgba(255,244,210,0.9) 60%);
+    box-shadow:0 10px 36px rgba(255,210,102,0.18), inset 0 -6px 18px #fff1c4;
+    border:3px solid rgba(255,240,220,0.95);
+    z-index:2;
+  }
+  /* actual stigma disc sits above ring slightly smaller so it reads as the yellow center */
+  .center .stigma{
+    position:relative;
+    width:84%;
+    height:84%;
+    border-radius:50%;
+    background: radial-gradient(circle at 40% 40%, #fff6d2 0%, var(--accent) 36%, #ffd166 60%);
+    box-shadow: 0 6px 22px rgba(255,200,120,0.18), inset 0 -8px 18px rgba(255,245,200,0.6);
+    z-index:3;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:var(--deep);
+    font-size:0.95rem;
+    text-align:center;
+    pointer-events:none;
+  }
+  .center.ready .stigma{ pointer-events:auto; cursor:pointer; } /* stigma clickable when ready */
+  .center.ready .stigma:active{ transform: scale(.98); }
+
+  /* two concentric rings of petals */
+  .petal{
+    position:absolute;
+    left:50%; top:50%;
+    transform-origin:50% 100%;
+    cursor:pointer;
+    transition: transform .22s cubic-bezier(.2,.9,.2,1), opacity .45s ease, filter .22s;
+    z-index:2;
+    --angle: 0deg;
+    --r: 140px;
+    transform: translate(-50%,-50%) rotate(var(--angle)) translateY(calc(-1 * var(--r)));
+    outline: none;
+    border-radius: 60% 60% 60% 60% / 100% 100% 60% 60%;
+    overflow: hidden;
+    background: transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .petal::before{
+    content:'';
+    position:absolute; inset:0;
+    border-radius: inherit;
+    /* darker, subtler highlights so petals don't read as transparent white */
+    background: 
+  /* subtle highlight at the top */
+  radial-gradient(120% 80% at 60% 18%, 
+    rgba(255, 255, 255, 0.4) 0%, 
+    rgba(255, 255, 255, 0.15) 12%, 
+    transparent 28%),
+
+  /* main petal body shading */
+  radial-gradient(ellipse at 58% 42%, 
+    rgba(255, 182, 193, 1) 20%,     /* light pink (base) */
+    rgba(245, 105, 145, 0.95) 55%,  /* deeper pink midtone */
+    rgba(210, 70, 120, 0.95) 85%,   /* rich pink edge */
+    rgba(170, 40, 90, 0.9) 100%),   /* darker edge for depth */
+
+  /* gentle bottom shadow */
+  linear-gradient(180deg, 
+    rgba(0,0,0,0) 10%, 
+    rgba(0,0,0,0.05) 65%, 
+    rgba(0,0,0,0.1) 100%);
+
+    /* stronger outer shadow and deeper inset for more weight */
+    box-shadow: 0 12px 36px rgba(150,50,90,0.18), inset 0 -14px 36px rgba(0,0,0,0.06);
+    border: none;
+  }
+
+  .petal.outer{ width:90px; height:180px; }
+  .petal.inner{ width:60px; height:120px; }
+
+  .petal:hover{ transform: translate(-50%,-50%) rotate(var(--angle)) translateY(calc(-1 * var(--r) - 12px)) scale(1.06); filter:brightness(1.02); }
+  .petal.removed{ opacity:0; pointer-events:none; transform: translate(-50%,-50%) rotate(var(--angle)) translateY(calc(-1 * var(--r) + 8px)) scale(.9); filter:grayscale(.2) blur(.2px); }
+
+  /* message area */
+  .message-box{
+    min-height:62px;
+    font-size:1.06rem;
+    text-align:center;
+    color:var(--deep);
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,250,248,0.95));
+    border-radius:14px;
+    padding:12px 18px;
+    z-index:2;
+    border:1px solid rgba(255,235,220,0.9);
+    box-shadow:0 12px 30px rgba(255,182,193,0.08);
+    font-weight:600;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s;
+  }
+  .message-pop{ transform:translateY(-6px); box-shadow:0 18px 48px rgba(255,182,193,0.16); background:linear-gradient(90deg,#fff8f8,#fff2f3); color:#b85c38; }
+
+  /* progress / quest bar */
+  .quest{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:center;
+    z-index:2;
+    margin-top:85px; /* increased so the quest bar sits well below the petals */
+  }
+  .progress-outer{
+    width:100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,248,246,0.95));
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(255,230,220,0.8);
+    box-shadow:0 10px 30px rgba(255,182,193,0.06);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  /* NEW: shake animation when progress >= 70% */
+  .progress-outer.shake{
+    animation: barShake 0.7s linear infinite;
+  }
+  @keyframes barShake{
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-6px) rotate(-0.6deg); }
+    40%  { transform: translateX(6px) rotate(0.6deg); }
+    60%  { transform: translateX(-4px) rotate(-0.4deg); }
+    80%  { transform: translateX(4px) rotate(0.4deg); }
+    100% { transform: translateX(0); }
+  }
+
+  .progress-info{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    width:100%;
+  }
+  .progress-label{ font-size:0.95rem; color:var(--deep); font-weight:700; }
+  .progress-stats{ font-size:0.95rem; color:#a05a42; font-weight:600; }
+
+  .bar-wrap{
+    position:relative;
+    width:100%;
+    height:14px;
+    background: rgba(255,235,236,0.9);
+    border-radius:12px;
+    overflow:hidden;
+    border:1px solid rgba(255,235,236,0.9);
+  }
+  .bar-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, var(--accent) 0%, #ffe8b0 30%, var(--rose) 100%);
+    background-size: 200% 100%;
+    transition: width .36s cubic-bezier(.2,.9,.3,1);
+    /* subtle base glow */
+    box-shadow: 0 2px 8px rgba(255,182,193,0.08) inset;
+    will-change: width, box-shadow, background-position;
+    animation: fillShimmer 4s linear infinite;
+  }
+
+  @keyframes fillShimmer{
+    0%{ background-position: 0% 0; }
+    50%{ background-position: 100% 0; }
+    100%{ background-position: 0% 0; }
+  }
+
+  .bar-fill.pulse{
+    animation: pulseGlow .9s ease both, fillShimmer 4s linear infinite;
+  }
+  @keyframes pulseGlow{
+    0% { box-shadow: 0 2px 8px rgba(255,182,193,0.08) inset; transform: scaleX(1); }
+    40% { box-shadow: 0 10px 28px rgba(255,182,193,0.22) inset; transform: scaleX(1.01); }
+    100%{ box-shadow: 0 2px 8px rgba(255,182,193,0.08) inset; transform: scaleX(1); }
+  }
+
+  .bar-heart{
+    position:absolute;
+    top:50%;
+    transform:translate(-50%,-50%);
+    left:0%;
+    font-size:1.15rem;
+    filter:drop-shadow(0 6px 12px rgba(255,160,180,0.18));
+    transition: left .36s cubic-bezier(.2,.9,.3,1);
+    will-change: left, transform;
+  }
+  .bar-heart.heart-bounce{
+    animation: heartBounce .64s cubic-bezier(.2,.75,.3,1);
+  }
+  @keyframes heartBounce{
+    0%   { transform: translate(-50%,-50%) scale(1); }
+    30%  { transform: translate(-50%,-76%) scale(1.18); }
+    60%  { transform: translate(-50%,-50%) scale(.96); }
+    100% { transform: translate(-50%,-50%) scale(1); }
+  }
+
+  .bar-heart::after{
+    content:'';
+    position:absolute;
+    right:-8px;
+    top:-8px;
+    width:10px; height:10px;
+    border-radius:50%;
+    background: rgba(255,241,158,0.95);
+    box-shadow: 0 0 14px rgba(255,210,102,0.9);
+    opacity:0;
+    transition: opacity .28s;
+  }
+  .bar-heart.heart-bounce::after{ opacity:1; transition-delay:.12s; }
+
+  .progress-outer{ transform-origin:center; animation: questEntrance .6s cubic-bezier(.2,.9,.2,1); }
+  @keyframes questEntrance{ from { transform: translateY(8px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+  /* letter overlay */
+  .letter-overlay{
+    position:fixed;
+    inset:0;
+    background: rgba(10,10,10,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    animation: overlayIn .24s ease;
+  }
+  .letter-card{
+    width:min(680px,92vw);
+    max-height:86vh;
+    overflow:auto;
+    background: linear-gradient(180deg,#fffaf0,#fff6e8);
+    border-radius:16px;
+    padding:28px;
+    box-shadow:0 30px 80px rgba(20,10,10,0.28);
+    border: 1px solid rgba(255,240,220,0.9);
+    color:var(--deep);
+    font-weight:500;
+  }
+  .letter-close{
+    position:absolute;
+    right:20px; top:20px;
+    background:transparent;
+    border:0;
+    font-size:1.1rem;
+    cursor:pointer;
+    color:var(--deep);
+  }
+  .letter-title{ font-size:1.25rem; font-weight:700; margin-bottom:12px; }
+  .letter-body{ white-space:pre-wrap; line-height:1.5; font-size:1rem; color:#5b3226; }
+
+  @keyframes overlayIn{ from { opacity:0; } to { opacity:1; } }
+
+  @media (max-width:600px){
+    .quest{ margin-top:130px; }
+    h1{ font-size:1.45rem; padding:8px 12px; }
+    .flower{ width:360px; height:360px; }
+    .center{ width:140px; height:140px; top: calc(50% + 36px); }
+    .center .stigma{ width:82%; height:82%; }
+    .petal.outer{ width:72px; height:150px; }
+    .petal.inner{ width:50px; height:98px; }
+    .message-box{ font-size:1rem; padding:10px 12px; }
+    .letter-card{ padding:18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="heart-bg" id="heart-bg"></div>
+
+<h1>🌸 Happy New Month! 🌸</h1>
+
+<div class="flower-wrap">
+  <div class="flower" id="flower">
+    <div class="flower-bg" aria-hidden="true"></div>
+    <div class="center" id="center">
+      <div class="ring" aria-hidden="true"></div>
+      <div class="stigma" id="stigma"></div>
+    </div>
+  </div>
+
+  <div class="message-box" id="messageBox"></div>
+
+  <div class="quest">
+    <div class="progress-outer">
+      <div class="progress-info">
+        <div class="progress-label">Petals picked</div>
+        <div class="progress-stats" id="progressStats">0%</div>
+      </div>
+      <div class="bar-wrap" id="barWrap">
+        <div class="bar-fill" id="barFill"></div>
+        <div class="bar-heart" id="barHeart">💛</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // floating hearts
+  const heartBg = document.getElementById('heart-bg');
+  for(let i=0;i<12;i++){
+    const h = document.createElement('div');
+    h.className='heart';
+    h.style.left = (Math.random()*100)+'vw';
+    h.style.top  = (65 + Math.random()*30)+'vh';
+    h.style.fontSize = (0.9 + Math.random()*1.8)+'rem';
+    h.style.opacity = 0.05 + Math.random()*0.18;
+    h.style.animationDelay = (Math.random()*7)+'s';
+    h.textContent = '❤';
+    heartBg.appendChild(h);
+  }
+
+  const flower = document.getElementById('flower');
+  const messageBox = document.getElementById('messageBox');
+  const center = document.getElementById('center');
+  const stigma = document.getElementById('stigma');
+  const barFill = document.getElementById('barFill');
+  const barHeart = document.getElementById('barHeart');
+  const progressStats = document.getElementById('progressStats');
+  const progressOuter = document.querySelector('.progress-outer');
+
+  // split petals into outer + inner for a natural look
+  const outerCount = 20;
+  const innerCount = 10;
+  const totalPetals = outerCount + innerCount;
+  let picked = 0;
+  let stigmaEnabled = false;
+
+  const dayMessages = [
+    "Day 1 — I loved you more with the letter today. :)",
+    "Day 2 — I loved you more when you show me your trust. :3",
+    "Day 3 — I loved you more when you make sure to have time despite being busy. :3",
+    "Day 4 — I loved you more when you play with me despite being sleepy. :p",
+    "Day 5 — I loved you more when you try your best to stay awake. :p",
+    "Day 6 — I loved you more when you involve me in anything you do. :D",
+    "Day 7 — I loved you more when you try to help me. :)",
+    "Day 8 — I loved you more when you yap about anything!",
+    "Day 9 — I loved you more when you show me your work. :D",
+    "Day 10 — I loved you more when you ask my opinion. :3",
+    "Day 11 — I loved you more when you show me your vulnerabilities. :)",
+    "Day 12 — I loved you more every time I see you. :3",
+    "Day 13 — I loved you more when you make sure to call. :3",
+    "Day 14 — I loved you more when you make sure you have time for me. :)",
+    "Day 15 — I loved you more when you show me I'm always in your thoughts. :)",
+    "Day 16 — I loved you more and more that I'm proud of you in everything you do. :3",
+    "Day 17 — I loved you more when I remember who you are, and how much you're capable of. :3",
+    "Day 18 — I loved you more when I realize how much you care. :)",
+    "Day 19 — I loved you more when you remind me I'm special to you. :)",
+    "Day 20 — I loved you more when I remember it's so close I'll see you already!",
+    "Day 21 — I loved you more despite gambling in exams. :p",
+    "Day 22 — I loved you more when you always make time for me. :)",
+    "Day 23 — I loved you more when you gain more knowledge and choose to share them to me. :)",
+    "Day 24 — Meeting you was the best thing that ever happened to me.",
+    "Day 25 — I loved you more and more and more when we met.",
+    "Day 26 — I loved you more when you always choose to comfort me.",
+    "Day 27 — I loved you more when you choose not to give up on me.",
+    "Day 28 — I loved you more when you choose me despite being unreasonable.",
+    "Day 29 — I loved you more when you always choose to take care of my heart. :)",
+    "Day 30 — I loved you more at the end of each month."
+  ];
+
+  // create petal and compute radius using center/stigma size so center is visually centered
+  function createPetal(kind, angleDeg, index){
+    const petal = document.createElement('div');
+    petal.className = 'petal ' + kind;
+    petal.style.setProperty('--angle', angleDeg + 'deg');
+    const centerDiameter = Math.max(1, (stigma && stigma.offsetWidth) ? stigma.offsetWidth : center.offsetWidth || 140);
+    const radius = Math.round((Math.min(flower.clientWidth, flower.clientHeight) - centerDiameter) / 2);
+    petal.style.setProperty('--r', radius + 'px');
+    petal.dataset.index = index;
+    petal.setAttribute('aria-label', `Petal day ${index}`);
+    petal.setAttribute('role','button');
+    petal.tabIndex = 0;
+    petal.addEventListener('click', () => handlePetalClick(petal, index));
+    petal.addEventListener('keydown', (e)=> { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePetalClick(petal, index); } });
+    return petal;
+  }
+
+  function handlePetalClick(petal, index){
+    if (petal.classList.contains('removed')) return;
+    petal.classList.add('removed');
+    picked++;
+    const text = dayMessages[index-1] || `Day ${index} — A little note.`;
+    messageBox.textContent = text;
+    messageBox.classList.add('message-pop');
+    setTimeout(()=>messageBox.classList.remove('message-pop'),420);
+    updateProgress();
+    if (picked === totalPetals){
+      // prepare stigma to be clickable
+      enableStigmaClick();
+      messageBox.textContent = "Tap there!";
+      messageBox.classList.add('message-pop');
+    }
+  }
+
+  function generatePetals(){
+    flower.querySelectorAll('.petal').forEach(n=>n.remove());
+    let dayIndex = 1;
+    for(let i=0;i<outerCount;i++){
+      const angle = (i/outerCount)*360;
+      const p = createPetal('outer', angle, dayIndex++);
+      flower.appendChild(p);
+    }
+    for(let i=0;i<innerCount;i++){
+      const angle = (i/innerCount)*360 + (360/innerCount)/2;
+      const p = createPetal('inner', angle, dayIndex++);
+      flower.appendChild(p);
+    }
+  }
+
+  function repositionPetals(){
+    const centerDiameter = Math.max(1, (stigma && stigma.offsetWidth) ? stigma.offsetWidth : center.offsetWidth || 140);
+    const radius = Math.round((Math.min(flower.clientWidth, flower.clientHeight) - centerDiameter) / 2);
+    flower.querySelectorAll('.petal').forEach(p=>{
+      p.style.setProperty('--r', radius + 'px');
+    });
+  }
+
+  function updateProgress(){
+    const percent = Math.round((picked/totalPetals)*100);
+    barFill.style.width = percent + '%';
+    progressStats.textContent = `${percent}%`;
+
+    const clamped = Math.max(2, Math.min(98, percent));
+    barHeart.style.left = `calc(${clamped}% )`;
+
+    barFill.classList.remove('pulse');
+    void barFill.offsetWidth;
+    barFill.classList.add('pulse');
+
+    barHeart.classList.remove('heart-bounce');
+    setTimeout(()=> barHeart.classList.add('heart-bounce'), 10);
+
+    if (progressOuter) {
+      if (percent >= 70) progressOuter.classList.add('shake');
+      else progressOuter.classList.remove('shake');
+    }
+
+    setTimeout(()=>{
+      barFill.classList.remove('pulse');
+      barHeart.classList.remove('heart-bounce');
+    }, 900);
+  }
+
+  // enable stigma click after 100% reached
+  function enableStigmaClick(){
+    if (stigmaEnabled) return;
+    stigmaEnabled = true;
+    center.classList.add('ready');
+    stigma.textContent = "Click me";
+    stigma.setAttribute('role','button');
+    stigma.tabIndex = 0;
+    // allow stigma element to receive pointer events via center.ready
+    // attach handlers
+    stigma.addEventListener('click', openLetter);
+    stigma.addEventListener('keydown', (e)=> { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLetter(); } });
+    // small attention animation
+    center.animate([
+      { transform: 'translate(-50%,-50%) scale(1)' },
+      { transform: 'translate(-50%,-50%) scale(1.04)' },
+      { transform: 'translate(-50%,-50%) scale(1)' }
+    ], { duration: 700, iterations: 2 });
+  }
+
+  // open letter overlay
+  function openLetter(){
+    // prevent double open
+    if (document.querySelector('.letter-overlay')) return;
+    // optionally hide the stigma text or change it
+    stigma.textContent = "";
+    // create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'letter-overlay';
+    overlay.innerHTML = `
+      <div class="letter-card" role="dialog" aria-modal="true" aria-label="A letter">
+        <button class="letter-close" aria-label="Close letter">✕</button>
+        <div class="letter-title">❤️</div>
+        <div class="letter-body">
+Hi love,
+
+When we finally met, everything felt better. It was like all the weight I've carried for so long suddenly lifted. Everything that once felt wrong in my life suddenly became right.
+
+All the pain, all the struggles, all the hard roads I had to walk — they were worth it. Because if the destination was your arms, then I would walk them all again a thousand times.
+
+Being with you felt like finding home. Like my heart finally recognized where it belonged. And in that moment, I knew: it has always been you.
+
+I know you don't want to be my path. And you won't be. I'll carve my own way. But I want you to know you're part of the destination I look forward to most. And I can't wait to live my life knowing I have you by my side.
+
+I love you more deeply than words could ever carry, but I hope you know how much you mean to me.
+
+I love you. Happy new month! <3
+
+With all my heart,
+— Angel
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.letter-close');
+    closeBtn.addEventListener('click', ()=> closeLetter(overlay));
+    overlay.addEventListener('click', (e)=> { if (e.target === overlay) closeLetter(overlay); });
+    // focus trap: focus close button
+    closeBtn.focus();
+  }
+
+  function closeLetter(overlay){
+    if (!overlay) overlay = document.querySelector('.letter-overlay');
+    if (!overlay) return;
+    overlay.remove();
+    // optionally set stigma back to heart or leave empty
+    stigma.textContent = "❤";
+    // keep center clickable disabled after letter shown
+    center.classList.remove('ready');
+    stigmaEnabled = false;
+    // update message box
+    messageBox.textContent = "Letter closed.";
+  }
+
+  // build
+  generatePetals();
+  repositionPetals();
+  updateProgress();
+
+  window.addEventListener('resize', ()=>{ repositionPetals(); });
+  window.addEventListener('load', ()=> { generatePetals(); repositionPetals(); updateProgress(); });
+</script>
+
+</body>
+</html>
